@@ -1,0 +1,18 @@
+struct MapEditor {
+  struct Element {
+    ImVec2 uv0;
+    ImVec2 uv1;
+  };
+
+  HashMap<char *, HashMap<IVec2, Element> *> *elements = NULL;
+  // HashMap<char *, Element *> *elements = NULL; // I took tradeoff between user accuracy and reliability of map editor here - used "Element *" instead of "HashMap<IVec2, Element>"
+  const char **keys = NULL; // Used internally to determine key order
+  IVec2 player_position;
+
+  void AddElement(const char *key, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position);
+  void Save();
+  void Load(const char *filename);
+  void Undo();
+  void Remove(const IVec2 &position);
+  void Clear();
+};
