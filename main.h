@@ -41,6 +41,7 @@ using namespace DirectX;
 #include "input.h"
 #include "map_editor.h"
 #include "player.h"
+#include "animationee.h"
 #include "core.h"
 
 #include "test.h"
@@ -54,9 +55,11 @@ using namespace DirectX;
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "comdlg32.lib")
 
-// TODO: Create map-creator, with ability to select ima
+// TODO: Create map-creator
 
 // https://rafaelmatos.itch.io/epic-rpg-world-pack-old-prison-asset-tileset
+// https://itch.io/profile/rgsdev - Good character animations
+// https://narehop.itch.io/top-down-rpg - Cool top-down tiles!
 
 // Tile palette:
 // 3. Create new sub window :: DONE
@@ -101,12 +104,23 @@ using namespace DirectX;
 // 44.1 Select only 1 tile when pressing mouse :: DONE
 // 44.2 Select multiple tiles when holding mouse :: DONE
 // 45. Fix issue with loading map that used multiple images :: DONE
-// 46. Rewrite map editor to make it store multiple images at the same tile
-// 47. Add player to the map
-// 47.1 Add "Player" button on top of the map :: DONE
+// 46. Rewrite map editor to make it store multiple images at the same tile :: DONE
+// 48. Grid change step equal to 8 :: DONE
+// 49. Fix issue with tiles selectin incorrectly when zoom is adjusted :: DONE
+// 50. Fix issue with double click is required to select tiles when zoom in adjusted
+// 51. Remove repating image paths (Hight memory usage when loading map) :: DONE
+// 53. Save map via GetSaveFileNameA function :: DONE
+// 54. Allocate strings using stb array :: DONE
+// 56. Separate images for tile palette and animationee :: DONE
+// 57. Replace hash maps with single byte stream and get data using template :: DONE
+// 58. Create "Animationee"
+// 58.1. Create data structure :: DONE
+// 58.2. Select images from drive and group them together :: DONE
 
+// N - 7. Add a button to animationee when pressed on the map binds first tile to remaining animation tiles
+// N - 6. String builder for better strings and serialization (Jonothan Blow)
+// N - 5. Play map (Enable user to test map in action)
 // N - 4. Fix issue with file creating and at the same time writing (ofstream can't write becase file doesn't exists)
-// N - 3. Remove repating image paths (Hight memory usage when loading map)
 // N - 2. Display not full path, but only filename in tab item
 // N - 1. Chest spawner
 // N. Layers in the map creation?

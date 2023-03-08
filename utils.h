@@ -41,5 +41,7 @@ namespace Utils {
   static void FlagAdd(int *flags, int flag);
   static void FlagRemove(int *flags, int flag);
   static bool FlagCheck(int flags, int flag);
-  static const char *OpenFileBrowser();
+  static const char *SelectFile();
+  static const char *SaveFile();
+  static const char *SelectFiles();
 };

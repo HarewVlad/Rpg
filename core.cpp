@@ -1,6 +1,6 @@
 void Core::InitializeConfig() {
-  config.Put("fps", 144);
-  config.Put("interface_speed", 3);
+  config.Put<int>("fps", 144);
+  config.Put<int>("interface_speed", 3);
 }
 
 void Core::Initialize(HINSTANCE instance) {
@@ -18,7 +18,7 @@ void Core::Initialize(HINSTANCE instance) {
 void Core::Run() {
   int old_time = Utils::GetMilliseconds();
   int extra_time = 0;
-  int frame_time = 1000 / config.GetInt("fps");
+  int frame_time = 1000 / config.Get<int>("fps");
   float dt = frame_time / 1000.0f;
 
   MSG msg = {};
@@ -60,7 +60,7 @@ void Core::Uninitialize() {
 }
 
 void Core::Input(float dt) {
-  int speed = config.GetInt("interface_speed");
+  int speed = config.Get<int>("interface_speed");
   if (window.IsKeyDown('W'))
     input.offset.y += speed;
   if (window.IsKeyDown('A'))
@@ -75,8 +75,57 @@ void Core::Update(float dt) {
 
 }
 
-void Core::RenderTilePaletteInterface(bool *open, int grid_step) {
-  ImGui::Begin("Tile palette", open, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
+void Core::RenderAnimationeeInterface(bool *show) {
+  ImGui::Begin("Animationee", show, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
+
+  if (ImGui::BeginMenuBar()) {
+    if (ImGui::BeginMenu("File")) {
+      if (ImGui::MenuItem("Open")) {
+        const char *filenames = Utils::SelectFiles();
+        defer { arrfree(filenames); };
+
+        if (filenames != NULL) {
+          const char *directory = filenames; // Directory stored first
+          for (int i = 0; i < arrlen(filenames); i++) {
+            if (filenames[i] == '\0') {
+              const char *file = filenames + i + 1;
+              if (*file != '\0') {
+                char *filename = NULL;
+                arrsetlen(filename, 256);
+                memset(filename, 0, arrlen(filename));
+
+                sprintf(filename, "%s\\%s", directory, file);
+
+                Image image;
+                image.Initialize(&directx, filename);
+                shput(animationee_images, filename, image);
+              } else {
+                break;
+              }
+            }
+          }
+        }
+      }
+      ImGui::EndMenu();
+    }
+
+    ImGui::EndMenuBar();
+  }
+
+  for (int i = 0; i < shlen(animationee_images); i++) {
+    const auto image = animationee_images[i].value;
+
+    if (ImGui::ImageButton((void *)image.texture, image.size)) {
+
+    }
+    ImGui::SameLine();
+  }
+
+  ImGui::End();
+}
+
+void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
+  ImGui::Begin("Tile palette", show, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
 
   static int zoom = 1;
   const int zoomed_grid_step = grid_step * zoom;
@@ -84,11 +133,11 @@ void Core::RenderTilePaletteInterface(bool *open, int grid_step) {
   if (ImGui::BeginMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       if (ImGui::MenuItem("Open")) {
-        const char *filename = Utils::OpenFileBrowser();
-        if (filename != NULL && shgeti(images, filename) < 0) {
+        const char *filename = Utils::SelectFile();
+        if (filename != NULL && shgeti(tile_palette_images, filename) < 0) {
           Image image;
           image.Initialize(&directx, filename);
-          shput(images, filename, image);
+          shput(tile_palette_images, filename, image);
         }
       }
       ImGui::EndMenu();
@@ -103,9 +152,9 @@ void Core::RenderTilePaletteInterface(bool *open, int grid_step) {
   }
 
   ImGui::BeginTabBar("Images");
-  for (int i = 0; i < shlen(images); i++) {
-    const auto image = images[i].value;
-    const auto key = images[i].key;
+  for (int i = 0; i < shlen(tile_palette_images); i++) {
+    const auto key = tile_palette_images[i].key;
+    const auto image = tile_palette_images[i].value;
 
     if (ImGui::BeginTabItem(key)) {
       tile_palette.SetActive(key);
@@ -126,7 +175,7 @@ void Core::RenderTilePaletteInterface(bool *open, int grid_step) {
       ImGuiIO &io = ImGui::GetIO();
       const ImVec2 mouse_position = io.MousePos - p0;
       const IVec2 mouse_tile = mouse_position / zoomed_grid_step;
-      const IVec2 max_tiles = image.size / zoomed_grid_step;
+      const IVec2 max_tiles = image.size / grid_step;
 
       static bool is_selecting = false;
       if (is_hovered && !is_selecting && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
@@ -169,6 +218,7 @@ void Core::RenderTilePaletteInterface(bool *open, int grid_step) {
 
 void Core::RenderCreateMapInterface() {
   static bool show_tile_palette = false;
+  static bool show_animationee = false;
   static bool show_grid = true;
   static int grid_step = 32;
   static int zoom = 1;
@@ -186,9 +236,15 @@ void Core::RenderCreateMapInterface() {
   if (ImGui::Button("Tile palette"))
     show_tile_palette = true;
 
-  ImGui::PushItemWidth(100);
+  if (ImGui::Button("Animationee"))
+    show_animationee = true;
+
+  if (show_tile_palette) RenderTilePaletteInterface(&show_tile_palette, grid_step);
+  if (show_animationee) RenderAnimationeeInterface(&show_animationee);
+
+  ImGui::PushItemWidth(150);
   ImGui::Checkbox("Show grid", &show_grid);
-  ImGui::SliderInt("Grid step", &grid_step, 16, 64);
+  ImGui::DragInt("Grid step", &grid_step, 8, 8, 64, "%d", ImGuiSliderFlags_AlwaysClamp);
   ImGui::SliderInt("Zoom", &zoom, 1, 10);
   ImGui::InputInt("Width", &map_size.x);
   ImGui::InputInt("Height", &map_size.y);
@@ -197,11 +253,15 @@ void Core::RenderCreateMapInterface() {
   if (ImGui::Button("Clear map"))
     map_editor.Clear();
 
-  if (ImGui::Button("Save map"))
-    map_editor.Save();
+  if (ImGui::Button("Save map")) {
+    const char *filename = Utils::SaveFile();
+    if (filename != NULL) {
+      map_editor.Save(filename);
+    }
+  }
 
   if (ImGui::Button("Load map")) {
-    const char *filename = Utils::OpenFileBrowser();
+    const char *filename = Utils::SelectFile();
     if (filename != NULL) {
       map_editor.Clear();
       map_editor.Load(filename);
@@ -211,15 +271,13 @@ void Core::RenderCreateMapInterface() {
       const char *key = map_editor.elements[i].key;
 
       Image image;
-      image.Initialize(&directx, key);
-      shput(images, key, image);
+      image.Initialize(&directx, filename);
+      shput(tile_palette_images, filename, image);
     }
   }
 
   if (ImGui::Button("Exit"))
     state = Core_Menu;
-
-  if (show_tile_palette) RenderTilePaletteInterface(&show_tile_palette, grid_step);
 
   const ImVec2 p0 = input.offset;
   const ImVec2 p1 = p0 + map_size * zoom;
@@ -250,8 +308,7 @@ void Core::RenderCreateMapInterface() {
   }
 
   if (tile_palette.active_key != NULL) {
-    const auto active_image = shget(images, tile_palette.active_key);
-
+    const auto active_image = shget(tile_palette_images, tile_palette.active_key);
     for (int i = 0; i < hmlen(tile_palette.active_tiles); i++) {
       const auto start_tile = tile_palette.active_tiles[0].key;
       const auto active_tile = tile_palette.active_tiles[i].key;
@@ -280,27 +337,18 @@ void Core::RenderCreateMapInterface() {
   for (int i = 0; i < shlen(map_editor.elements); i++) {
     const auto key = map_editor.elements[i].key;
     const auto map = map_editor.elements[i].value;
-    const auto image = shget(images, key);
+    const auto image = shget(tile_palette_images, key);
     for (int j = 0; j < hmlen(map); j++) {
       const auto position = map[j].key;
-      const auto element = map[j].value;
+      const auto array = map[j].value;
+      for (int k = 0; k < arrlen(array); k++) {
+        const auto element = array[k];
 
-      ImGui::SetCursorPos(p0 + position * zoomed_grid_step);
-      ImGui::Image((void *)image.texture, ImVec2(zoomed_grid_step, zoomed_grid_step), element.uv0, element.uv1);
+        ImGui::SetCursorPos(p0 + position * zoomed_grid_step);
+        ImGui::Image((void *)image.texture, ImVec2(zoomed_grid_step, zoomed_grid_step), element.uv0, element.uv1);
+      }
     }
   }
-  // for (int i = 0; i < shlen(map_editor.elements); i++) {
-  //   const auto key = map_editor.elements[i].key;
-  //   const auto array = map_editor.elements[i].value;
-  //   const auto image = shget(images, key);
-
-  //   for (int j = 0; j < arrlen(array); j++) {
-  //     const auto element = array[j];
-
-  //     ImGui::SetCursorPos(p0 + element.position * zoomed_grid_step);
-  //     ImGui::Image((void *)image.texture, ImVec2(zoomed_grid_step, zoomed_grid_step), element.uv0, element.uv1, ImVec4(1,1,1,1), ImVec4(0,0,0,1));
-  //   }
-  // }
 
   if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))
     map_editor.Undo();

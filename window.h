@@ -1,4 +1,4 @@
-enum WindowFlags {
+enum Window_ {
   Window_None = 0,
   Window_Active = 1 << 0,
 };

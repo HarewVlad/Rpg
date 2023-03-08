@@ -1,4 +1,4 @@
-enum CoreState {
+enum Core_ {
   Core_None = 0,
   Core_Menu = 1 << 0,
   Core_Game = 1 << 1,
@@ -12,8 +12,10 @@ struct Core {
   TilePalette tile_palette;
   Input input;
   MapEditor map_editor;
+  Animationee animationee;
 
-  HashMap<char *, Image> *images = NULL;
+  HashMap<char *, Image> *tile_palette_images = NULL;
+  HashMap<char *, Image> *animationee_images = NULL;
 
   int state = Core_Menu;
 
@@ -22,6 +24,7 @@ struct Core {
   void Uninitialize();
 
 private:
+  void RenderAnimationeeInterface(bool *show);
   void RenderMenuInterface();
   void RenderTilePaletteInterface(bool *show, int grid_step); // Need to sync map grid and tile palette grid
   void RenderCreateMapInterface();

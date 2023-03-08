@@ -1,0 +1,12 @@
+What game about?
+
+Platformer / isometric rpg-like game (currently focusing on shooter mechanics) currently focusing on pve component - player spawns in some room, and then need to find exit with enemies coming for him all the time from dark and deep insides of the map. Map could contain some chests with loot that you can take out and other interesting stuff (some unique items that can give you insane power but they are ultimately rare - it means you can be newbee but if you get this item you'll become super hard to kill (luck is everything even in life)). The goal is to flee from the map in time, but you can stay longer. Downsight of that - super powerfull enemies will start to spawn - they are insanely hard to kill and they give you permanent debuffs when they hit you (This debuffs persist forever - only to be taken out by some insanely rare powerfull unique items). So if you want to get rid of them - recreate your character. And of course there is a characters - currenlty focus will be on warrior and ranger. Mages is hard to do fun and balance them because they should be super powerfull. But i'll figure out what to do with them. Map will be dark, need to use torches and stuff that you can buy in hometown. Equipment also can be crafted in town if you find ancient recepy and ingridients.
+
+There will be multiplayer - 1vs1 or more in the same or bigger map. Goal is the same, but you can also kill players or cooperate with them. Hard to do but still - there will be traitor AI player: it will be friendly and do some stuff but eventually becomes enemy. I don't know how i'll do that but it's a good idea.
+
+Also want to add some rare and scary enemies from "Backrooms" or use the same concept - add secret places in map (small rooms may be) where you have chance to find super rare loot but enemies are lethal - can't kill them because they from other world and deal lethal damage (need to counter them someway).
+
+So ye
+
+Maximum details: 
+Will create 1-2 maps, with mechanic of opening chests and killing npcs. BONUS: Multiplayer

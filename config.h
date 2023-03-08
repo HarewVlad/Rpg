@@ -1,15 +1,12 @@
 struct Config {
-  HashMap<char *, int> *integers = NULL;
-  HashMap<char *, float> *floats = NULL;
-  HashMap<char *, char *> *strings = NULL;
+  const char *stream = NULL;
+  HashMap<char *, size_t> *indexes = NULL;
 
-  void Put(const char *key, int value);
-  void Put(const char *key, float value);
-  void Put(const char *key, char *value);
+  template <typename T>
+  void Put(const char *key, const T &data);
 
-  int GetInt(const char *key);
-  float GetFloat(const char *key);
-  char *GetString(const char *key);
+  template <typename T>
+  const T Get(const char *key);
 
   void Uninitialize();
 };

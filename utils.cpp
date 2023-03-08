@@ -16,17 +16,10 @@ namespace Utils {
     return flags & flag;
   }
 
-  static const char *OpenFileBrowser() {
-    // wchar_t buffer[32767];
-    // if (GetFileNameFromBrowse(hwnd, buffer, sizeof(buffer), NULL, NULL, NULL, NULL)) {
-    //   if (!stbi_convert_wchar_to_utf8(filename, size, buffer)) {
-    //     assert(0 && "Failed to convert wchar_t to utf8");
-    //   }
-    // } else {
-    //   assert(0 && "Failed to open file");
-    // }
-
-    char *filename = new char[256];
+  static const char *SelectFile() {
+    char *filename = NULL;
+    arrsetlen(filename, 256);
+    memset(filename, 0, arrlen(filename));
 
     OPENFILENAMEA ofn = {};
     ofn.lStructSize = sizeof(ofn);
@@ -44,8 +37,61 @@ namespace Utils {
     if (GetOpenFileNameA(&ofn)) {
       return filename;
     } else {
-      delete filename;
+      arrfree(filename);
+      return NULL;
+    }
+  }
+
+  static const char *SaveFile() {
+    char *filename = NULL;
+    arrsetlen(filename, 256);
+    memset(filename, 0, arrlen(filename));
+
+    OPENFILENAMEA ofn = {};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = filename;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = static_cast<DWORD>(arrlen(filename));
+    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    if (GetSaveFileNameA(&ofn)) {
+      return filename;
+    } else {
+      arrfree(filename);      
+      return NULL;
+    }
+  }
+
+  static const char *SelectFiles() {
+    char *filename = NULL;
+    arrsetlen(filename, 256 * 16); // Up to 16 files
+    memset(filename, 0, arrlen(filename));
+
+    OPENFILENAMEA ofn = {};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = filename;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = static_cast<DWORD>(arrlen(filename));
+    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
+
+    if (GetOpenFileNameA(&ofn)) {
+      return filename;
+    } else {
+      arrfree(filename);      
       return NULL;
     }
   }
 };
+

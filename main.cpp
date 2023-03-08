@@ -17,6 +17,7 @@
 #include "tile_palette.cpp"
 #include "map_editor.cpp"
 #include "player.cpp"
+#include "animationee.cpp"
 #include "core.cpp"
 
 #include "test.cpp"
