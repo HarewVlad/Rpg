@@ -5,7 +5,7 @@ struct MapEditor {
   };
 
   HashMap<char *, HashMap<IVec2, Element *> *> *elements = NULL;
-  const char **keys = NULL; // Used internally to determine key order
+  const char **keys = NULL; // Used internally for undo operation
   IVec2 player_position;
 
   void AddElement(const char *key, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position);

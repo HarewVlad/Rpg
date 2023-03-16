@@ -55,10 +55,6 @@ void Core::Run() {
   }
 }
 
-void Core::Uninitialize() {
-  config.Uninitialize();
-}
-
 void Core::Input(float dt) {
   int speed = config.Get<int>("interface_speed");
   if (window.IsKeyDown('W'))
@@ -270,9 +266,11 @@ void Core::RenderCreateMapInterface() {
     for (int i = 0; i < hmlen(map_editor.elements); i++) {
       const char *key = map_editor.elements[i].key;
 
-      Image image;
-      image.Initialize(&directx, filename);
-      shput(tile_palette_images, filename, image);
+      if (shgeti(tile_palette_images, key) < 0) {
+        Image image;
+        image.Initialize(&directx, key);
+        shput(tile_palette_images, key, image);
+      }
     }
   }
 

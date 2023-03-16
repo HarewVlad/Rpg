@@ -5,13 +5,9 @@
 #include <d3d11.h>
 #include <directxmath.h>
 #include <d3dcompiler.h>
-#include <random>
 #include <assert.h>
 #include <memory>
 #include <commdlg.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 
 // Asio
 // #include <asio.hpp>
@@ -116,6 +112,7 @@ using namespace DirectX;
 // 58. Create "Animationee"
 // 58.1. Create data structure :: DONE
 // 58.2. Select images from drive and group them together :: DONE
+// 59. Rewrite map editor's serialization as byte stream instead of string stream and use C functions :: DONE
 
 // N - 7. Add a button to animationee when pressed on the map binds first tile to remaining animation tiles
 // N - 6. String builder for better strings and serialization (Jonothan Blow)

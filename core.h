@@ -21,7 +21,6 @@ struct Core {
 
   void Initialize(HINSTANCE instance);
   void Run();
-  void Uninitialize();
 
 private:
   void RenderAnimationeeInterface(bool *show);

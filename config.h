@@ -1,5 +1,5 @@
 struct Config {
-  const char *stream = NULL;
+  char *stream = NULL;
   HashMap<char *, size_t> *indexes = NULL;
 
   template <typename T>

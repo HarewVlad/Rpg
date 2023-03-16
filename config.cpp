@@ -5,8 +5,7 @@ void Config::Uninitialize() {
 
 template <typename T>
 void Config::Put(const char *key, const T &data) {
-  auto index = arraddnindex(stream, sizeof(T));
-  memcpy((void *)&stream[index], &data, sizeof(T));
+  auto index = Stream::Append(&stream, &data, sizeof(T));
   shput(indexes, key, index);
 }
 

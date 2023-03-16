@@ -15,78 +15,80 @@ void MapEditor::Clear() {
     hmfree(hash_map);
   }
   hmfree(elements);
+  arrfree(keys);
 }
 
 void MapEditor::Save(const char *filename) {
-  std::ofstream out(filename, std::ofstream::trunc);
-  defer { out.close(); };
+  FILE *file = fopen(filename, "wb+");
+  defer { fclose(file); };
 
-  if (out) {
+  if (file != NULL) {
+    char *stream = NULL;
+    defer { arrfree(stream); };
+    
     for (int i = 0; i < shlen(elements); i++) {
       const auto key = elements[i].key;
       const auto hash_map = elements[i].value;
+      const auto hash_map_length = hmlen(hash_map);
 
-      out << key << ' ' << hmlen(hash_map) << ' ';
+      Stream::Append(&stream, key, 256); // Standart size, so no need to worry about anything
+      Stream::Append(&stream, &hash_map_length, sizeof(int));
 
-      for (int j = 0; j < hmlen(hash_map); j++) {
+      for (int j = 0; j < hash_map_length; j++) {
         const auto position = hash_map[j].key;
         const auto array = hash_map[j].value;
+        const auto array_length = arrlen(array);
 
-        out << position.x << ' ' << position.y << ' ' << arrlen(array) << ' ';
-
-        for (int k = 0; k < arrlen(array); k++) {
-          const auto element = array[k];
-
-          out << element.uv0.x << ' ' << element.uv0.y << ' '
-              << element.uv1.x << ' ' << element.uv1.y << ' '
-              << ' ';
-        }
+        Stream::Append(&stream, &position, sizeof(IVec2));
+        Stream::Append(&stream, &array_length, sizeof(int));
+        Stream::Append(&stream, &array[0], array_length * sizeof(Element));
       }
-
-      out << '\n';
     }
+    const auto stream_length = arrlen(stream);
+
+    fwrite(&stream_length, sizeof(int), 1, file);
+    fwrite(stream, stream_length, 1, file);
   }
 }
 
 void MapEditor::Load(const char *filename) {
-  std::ifstream input(filename);
-  defer { input.close(); };
+  FILE *file = fopen(filename, "rb+");
+  defer { fclose(file); };
 
-  std::string line;
-  while (std::getline(input, line)) {
-    std::istringstream stream(line);
+  if (file != NULL) {
+    int size;
+    fread(&size, sizeof(size), 1, file);
+
+    char *stream = NULL;
+    arrsetlen(stream, size);
+    
+    char *p = stream; // Stream::Read moves "stream" pointer, so need a backup
+    defer { arrfree(p); };
+
+    fread(stream, size, 1, file);
 
     char *key = NULL;
     arrsetlen(key, 256);
     memset(key, 0, arrlen(key));
+
     int element_count;
 
-    if (!(stream >> key >> element_count)) {
-      assert(0 && "Failed to parse key and element_count");
-    }
+    Stream::Read(&stream, key, arrlen(key));
+    Stream::Read(&stream, &element_count, sizeof(element_count));
 
     auto hash_map = shget(elements, key);
 
     for (int i = 0; i < element_count; i++) {
       IVec2 position;
-      int length;
+      int array_length;
 
-      if (!(stream >> position.x >> position.y >> length)) {
-        assert(0 && "Failed to get position and length");
-      }
+      Stream::Read(&stream, &position, sizeof(position));
+      Stream::Read(&stream, &array_length, sizeof(array_length));
 
       auto array = hmget(hash_map, position);
+      arrsetlen(array, array_length);
 
-      for (int j = 0; j < length; j++) {
-        Element element;
-
-        if (!(stream >> element.uv0.x >> element.uv0.y
-                     >> element.uv1.x >> element.uv1.y)) {
-          assert(0 && "Failed to parse elements");
-        }
-
-        arrput(array, element);
-      }
+      Stream::Read(&stream, &array[0], array_length * sizeof(*array));
 
       hmput(hash_map, position, array);
     }
@@ -97,11 +99,11 @@ void MapEditor::Load(const char *filename) {
 
 void MapEditor::Undo() {
   if (arrlen(keys)) {
-    const char *last_key = arrpop(keys);
+    const auto last_key = arrpop(keys);
     if (last_key != NULL) {
       auto hash_map = shget(elements, last_key);
-      auto length = hmlenu(hash_map);
-      auto key = hash_map[length - 1].key;
+      const auto length = hmlenu(hash_map);
+      const auto key = hash_map[length - 1].key;
       hmdel(hash_map, key);
     }
   }

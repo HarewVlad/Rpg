@@ -95,3 +95,20 @@ namespace Utils {
   }
 };
 
+namespace Stream {
+  static size_t Append(char **stream, const void *data, size_t size) {
+    auto index = arraddnindex(*stream, size);
+    memcpy((void *)&(*stream)[index], data, size);
+    return index;
+  }
+
+  static void Insert(char **stream,  size_t index, const void *data, size_t size) {
+    arrinsn((char *)*stream, index, size);
+    memcpy((void *)&(*stream)[index], data, size);
+  }
+
+  static void Read(char **stream, void *data, size_t size) {
+    memcpy(data, *stream, size);
+    *stream += size;
+  }
+};

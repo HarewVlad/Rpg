@@ -27,8 +27,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   Test::TestConfig();
 
   Core core;
-  defer { core.Uninitialize(); };
-
   core.Initialize(hInstance);
   core.Run();
 
