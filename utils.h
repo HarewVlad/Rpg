@@ -44,11 +44,11 @@ namespace Utils {
   static const char *SelectFile();
   static const char *SaveFile();
   static const char *SelectFiles();
+  static char *GetString(size_t size);
 };
 
 namespace Stream {
   static size_t Append(char **stream, const void *data, size_t size);
   static void Insert(char **stream,  size_t index, const void *data, size_t size);
-
   static void Read(char **stream, void *data, size_t size);
 };

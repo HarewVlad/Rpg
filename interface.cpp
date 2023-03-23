@@ -26,4 +26,21 @@ namespace ImGui {
       draw_list->AddLine(ImVec2(p0.x, p0.y + y), ImVec2(p1.x, p0.y + y), IM_COL32(200, 200, 200, 200));
     draw_list->PopClipRect();
   }
+
+  void ListBox(const char *label, int *index, const int *data, size_t size) {
+    if (ImGui::BeginListBox(label)) {
+      for (int i = 0; i < size; i++) {
+        const bool is_selected = (*index == i);
+        
+        char buffer[32];
+        sprintf(buffer, "##ListBox##%d", i);
+        if (ImGui::Selectable(buffer, is_selected))
+          *index = i;
+
+        if (is_selected)
+          ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndListBox();
+    }
+  }
 };

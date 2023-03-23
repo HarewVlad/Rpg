@@ -1,12 +1,16 @@
-void MapEditor::AddElement(const char *key, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position) {
-  auto hash_map = shget(elements, key);
+void MapEditor::AddElement(const char *filename, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position) {
+  auto hash_map = shget(elements, filename);
   auto array = hmget(hash_map, position);
 
   arrput(array, (Element {uv0, uv1}));
   hmput(hash_map, position, array);
 
-  shput(elements, key, hash_map);
-  arrput(keys, key);
+  shput(elements, filename, hash_map);
+  arrput(filenames, filename);
+}
+
+void MapEditor::AddCharacter(const IVec2 &position) {
+  hmput(characters, position, (Character {}));
 }
 
 void MapEditor::Clear() {
@@ -15,7 +19,18 @@ void MapEditor::Clear() {
     hmfree(hash_map);
   }
   hmfree(elements);
-  arrfree(keys);
+  arrfree(filenames);
+}
+
+void MapEditor::InitializeModelMatrices() {
+  size_t length = arrlen(element_model_matrices);
+  if (!length || length < size.x * size.y) {
+    for (int i = 0; i < size.x; i++) {
+      for (int j = 0; j < size.y; j++) {
+        
+      }
+    }
+  }
 }
 
 void MapEditor::Save(const char *filename) {
@@ -25,13 +40,15 @@ void MapEditor::Save(const char *filename) {
   if (file != NULL) {
     char *stream = NULL;
     defer { arrfree(stream); };
+
+    Stream::Append(&stream, &size, sizeof(IVec2));
     
     for (int i = 0; i < shlen(elements); i++) {
       const auto key = elements[i].key;
       const auto hash_map = elements[i].value;
       const auto hash_map_length = hmlen(hash_map);
 
-      Stream::Append(&stream, key, 256); // Standart size, so no need to worry about anything
+      Stream::Append(&stream, key, MAX_PATH);
       Stream::Append(&stream, &hash_map_length, sizeof(int));
 
       for (int j = 0; j < hash_map_length; j++) {
@@ -56,23 +73,24 @@ void MapEditor::Load(const char *filename) {
   defer { fclose(file); };
 
   if (file != NULL) {
-    int size;
-    fread(&size, sizeof(size), 1, file);
+    int stream_length;
+    fread(&stream_length, sizeof(stream_length), 1, file);
 
     char *stream = NULL;
-    arrsetlen(stream, size);
+    arrsetlen(stream, stream_length);
     
     char *p = stream; // Stream::Read moves "stream" pointer, so need a backup
     defer { arrfree(p); };
 
-    fread(stream, size, 1, file);
+    fread(stream, stream_length, 1, file);
 
     char *key = NULL;
-    arrsetlen(key, 256);
+    arrsetlen(key, MAX_PATH);
     memset(key, 0, arrlen(key));
 
     int element_count;
 
+    Stream::Read(&stream, &size, sizeof(size));
     Stream::Read(&stream, key, arrlen(key));
     Stream::Read(&stream, &element_count, sizeof(element_count));
 
@@ -98,10 +116,10 @@ void MapEditor::Load(const char *filename) {
 }
 
 void MapEditor::Undo() {
-  if (arrlen(keys)) {
-    const auto last_key = arrpop(keys);
-    if (last_key != NULL) {
-      auto hash_map = shget(elements, last_key);
+  if (arrlen(filenames)) {
+    const auto filename = arrpop(filenames);
+    if (filename != NULL) {
+      auto hash_map = shget(elements, filename);
       const auto length = hmlenu(hash_map);
       const auto key = hash_map[length - 1].key;
       hmdel(hash_map, key);

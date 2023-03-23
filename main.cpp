@@ -13,11 +13,12 @@
 #include "window.cpp"
 #include "directx.cpp"
 #include "interface.cpp"
-#include "image.cpp"
 #include "tile_palette.cpp"
+#include "character.cpp"
 #include "map_editor.cpp"
 #include "player.cpp"
 #include "animationee.cpp"
+#include "mesh.cpp"
 #include "core.cpp"
 
 #include "test.cpp"

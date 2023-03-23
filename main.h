@@ -32,12 +32,12 @@ using namespace DirectX;
 #include "window.h"
 #include "directx.h"
 #include "interface.h"
-#include "image.h"
 #include "tile_palette.h"
-#include "input.h"
+#include "animationee.h"
+#include "character.h"
 #include "map_editor.h"
 #include "player.h"
-#include "animationee.h"
+#include "mesh.h"
 #include "core.h"
 
 #include "test.h"
@@ -109,15 +109,30 @@ using namespace DirectX;
 // 54. Allocate strings using stb array :: DONE
 // 56. Separate images for tile palette and animationee :: DONE
 // 57. Replace hash maps with single byte stream and get data using template :: DONE
-// 58. Create "Animationee"
+// 58. Create animationee :: DONE
 // 58.1. Create data structure :: DONE
 // 58.2. Select images from drive and group them together :: DONE
 // 59. Rewrite map editor's serialization as byte stream instead of string stream and use C functions :: DONE
+// 60. More flexible grid step selection :: DONE
+// 61. Create character checkbox to add character to the map :: DONE
+// 62. Small refactor of image initialization :: DONE
+// 63. New interface for selecting animation action and grid step :: DONE
+// 64. Inside animationee make not list of images, but animation using this images :: DONE
+// 65. Make sure that every image that is loaded is stored in core :: DONE 
+// 66. Add animation to character on the map :: DONE
+// 67. Fix issue when adding multiple animations in animationee you can't use combo box for second one :: DONE
+// 69. Ability to select same images in animationee :: DONE
+// 69. "Play" map
+// 69.1. Create shaders :: DONE
+// 69.2. Create input layout :: DONE
+// 69.3. Create constant buffer :: DONE
+// 69.4. Create meshes
+// 70. Save/Load map size :: DONE
+// 71. Fix issue when zooming map, can't place tiles outside of some region :: DONE
 
-// N - 7. Add a button to animationee when pressed on the map binds first tile to remaining animation tiles
-// N - 6. String builder for better strings and serialization (Jonothan Blow)
-// N - 5. Play map (Enable user to test map in action)
-// N - 4. Fix issue with file creating and at the same time writing (ofstream can't write becase file doesn't exists)
+// N - 7. Clean memory when deleting character
+// N - 6. Merge interface modules (TilePalette, MapEditor ...)
+// N - 5. String builder for better strings and serialization (Jonothan Blow)
 // N - 2. Display not full path, but only filename in tab item
 // N - 1. Chest spawner
 // N. Layers in the map creation?

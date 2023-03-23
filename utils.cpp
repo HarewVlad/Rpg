@@ -17,9 +17,7 @@ namespace Utils {
   }
 
   static const char *SelectFile() {
-    char *filename = NULL;
-    arrsetlen(filename, 256);
-    memset(filename, 0, arrlen(filename));
+    char *filename = Utils::GetString(MAX_PATH);
 
     OPENFILENAMEA ofn = {};
     ofn.lStructSize = sizeof(ofn);
@@ -43,9 +41,7 @@ namespace Utils {
   }
 
   static const char *SaveFile() {
-    char *filename = NULL;
-    arrsetlen(filename, 256);
-    memset(filename, 0, arrlen(filename));
+    char *filename = Utils::GetString(MAX_PATH);
 
     OPENFILENAMEA ofn = {};
     ofn.lStructSize = sizeof(ofn);
@@ -69,9 +65,7 @@ namespace Utils {
   }
 
   static const char *SelectFiles() {
-    char *filename = NULL;
-    arrsetlen(filename, 256 * 16); // Up to 16 files
-    memset(filename, 0, arrlen(filename));
+    char *filename = Utils::GetString(MAX_PATH * 16); // Up to 16 files
 
     OPENFILENAMEA ofn = {};
     ofn.lStructSize = sizeof(ofn);
@@ -92,6 +86,14 @@ namespace Utils {
       arrfree(filename);      
       return NULL;
     }
+  }
+
+  static char *GetString(size_t size) {
+    char *result = NULL;
+    arrsetlen(result, size);
+    memset(result, 0, size);
+
+    return result;
   }
 };
 

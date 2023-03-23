@@ -129,15 +129,15 @@ void Directx::RenderEnd() {
   swap_chain->Present(0, 0);
 }
 
-ID3D11ShaderResourceView *Directx::CreateTexture(const char *filename, int *width, int *height) {
-  ID3D11ShaderResourceView *result = nullptr;
+Image Directx::CreateImage(const char *filename) {
+  Image result = {};
 
   int bpp;
-  unsigned char *pixels = stbi_load(filename, width, height, &bpp, 4);
+  unsigned char *pixels = stbi_load(filename, &result.size.x, &result.size.y, &bpp, 4);
 
   D3D11_TEXTURE2D_DESC td = {};
-  td.Width = *width;
-  td.Height = *height;
+  td.Width = result.size.x;
+  td.Height = result.size.y;
   td.MipLevels = 1;
   td.ArraySize = 1;
   td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -158,8 +158,77 @@ ID3D11ShaderResourceView *Directx::CreateTexture(const char *filename, int *widt
   srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   srvd.Texture2D.MipLevels = td.MipLevels;
   srvd.Texture2D.MostDetailedMip = 0;
-  assert(device->CreateShaderResourceView(texture, &srvd, &result) == S_OK);
+  assert(device->CreateShaderResourceView(texture, &srvd, &result.texture) == S_OK);
 
   texture->Release();
+  return result;
+}
+
+VertexShader Directx::CreateVertexShader(LPCWSTR filename) {
+  VertexShader result;
+
+  result.blob = CompileShader(filename, "vs_5_0");
+
+  assert(device->CreateVertexShader(result.blob->GetBufferPointer(),
+                                    result.blob->GetBufferSize(), NULL,
+                                    &result.shader) == S_OK);
+
+  return result;
+}
+
+PixelShader Directx::CreatePixelShader(LPCWSTR filename) {
+  PixelShader result;
+
+  result.blob = CompileShader(filename, "ps_5_0");
+
+  assert(device->CreatePixelShader(result.blob->GetBufferPointer(),
+                                   result.blob->GetBufferSize(), NULL,
+                                   &result.shader) == S_OK);
+
+  return result;
+}
+
+ID3D10Blob *Directx::CompileShader(LPCWSTR filename, const char *target) {
+  ID3D10Blob *result;
+  ID3D10Blob *compilation_message;
+  if (D3DCompileFromFile(filename, 0, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                         "main", target, D3DCOMPILE_DEBUG, 0, &result,
+                         &compilation_message) != S_OK)
+    if (compilation_message != NULL)
+      OutputDebugStringA((char *)compilation_message->GetBufferPointer());
+
+  return result; 
+}
+
+ID3D11InputLayout *Directx::CreateInputLayout(D3D11_INPUT_ELEMENT_DESC *vertex_element_desc,
+                                              UINT size,
+                                              VertexShader *vertex_shader) {
+  ID3D11InputLayout *result;
+  assert(device->CreateInputLayout(
+             vertex_element_desc, size,
+             vertex_shader->blob->GetBufferPointer(),
+             vertex_shader->blob->GetBufferSize(), &result) == S_OK);
+
+  return result;
+}
+
+ID3D11Buffer *Directx::CreateBuffer(D3D11_USAGE usage, UINT type, 
+                                    UINT cpu_flags, void *data, UINT size) {
+  ID3D11Buffer *result;
+
+  D3D11_BUFFER_DESC bd = {};
+  bd.Usage = usage;
+  bd.BindFlags = type;
+  bd.ByteWidth = size;
+  bd.CPUAccessFlags = cpu_flags;
+  
+  if (data != NULL) {
+    D3D11_SUBRESOURCE_DATA sd = {};
+    sd.pSysMem = data;
+    assert(device->CreateBuffer(&bd, &sd, &result) == S_OK);
+  } else {
+    assert(device->CreateBuffer(&bd, NULL, &result) == S_OK);
+  }
+
   return result;
 }

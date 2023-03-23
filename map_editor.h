@@ -5,10 +5,14 @@ struct MapEditor {
   };
 
   HashMap<char *, HashMap<IVec2, Element *> *> *elements = NULL;
-  const char **keys = NULL; // Used internally for undo operation
-  IVec2 player_position;
+  const char **filenames = NULL; // Used internally for undo operation
+  HashMap<IVec2, Character> *characters = NULL;
+  IVec2 size = IVec2(512, 512);
+  XMMATRIX *element_model_matrices = NULL;
 
-  void AddElement(const char *key, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position);
+  void InitializeModelMatrices();
+  void AddElement(const char *filename, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position);
+  void AddCharacter(const IVec2 &position);
   void Save(const char *filename);
   void Load(const char *filename);
   void Undo();
