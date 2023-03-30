@@ -34,6 +34,7 @@ struct Directx {
   void Initialize(HWND hwnd, int width, int height);
   void RenderBegin();
   void RenderEnd();
+  void UpdateBuffer(ID3D11Buffer *buffer, const void *data, size_t size);
   Image CreateImage(const char *filename);
   VertexShader CreateVertexShader(LPCWSTR filename);
   PixelShader CreatePixelShader(LPCWSTR filename);

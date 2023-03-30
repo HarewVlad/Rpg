@@ -19,6 +19,8 @@ struct Core {
   PixelShader map_pixel_shader;
   ID3D11InputLayout *map_input_layout;
   ID3D11Buffer *constant_buffer;
+  Camera camera;
+  XMMATRIX projection;
 
   HashMap<char *, Image> *editor_images = NULL;
   HashMap<char *, Image> *animation_images = NULL;

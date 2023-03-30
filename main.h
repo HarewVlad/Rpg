@@ -36,8 +36,8 @@ using namespace DirectX;
 #include "animationee.h"
 #include "character.h"
 #include "map_editor.h"
-#include "player.h"
 #include "mesh.h"
+#include "camera.h"
 #include "core.h"
 
 #include "test.h"
@@ -126,7 +126,10 @@ using namespace DirectX;
 // 69.1. Create shaders :: DONE
 // 69.2. Create input layout :: DONE
 // 69.3. Create constant buffer :: DONE
-// 69.4. Create meshes
+// 69.4. Create meshes :: DONE
+// 69.5. Draw test mesh when click "Test map" :: DONE
+// 69.6. Draw meshes correponding to tiles in map editor :: DONE
+// 69.7. Create dynamic instance buffer for uv coordinates for different map objects
 // 70. Save/Load map size :: DONE
 // 71. Fix issue when zooming map, can't place tiles outside of some region :: DONE
 

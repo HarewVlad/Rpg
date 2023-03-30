@@ -109,6 +109,13 @@ void Directx::CreateDepthStencilView(int width, int height) {
   assert(device->CreateDepthStencilView(depth_stencil, nullptr, &depth_stencil_view) == S_OK);
 }
 
+void Directx::UpdateBuffer(ID3D11Buffer *buffer, const void *data, size_t size) {
+  D3D11_MAPPED_SUBRESOURCE sr;
+  device_context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &sr);
+  memcpy(sr.pData, data, size);
+  device_context->Unmap(buffer, 0);
+}
+
 void Directx::RenderBegin() {
   const float clear_color[] = {0.1, 0.1, 0.2, 1};
   device_context->ClearRenderTargetView(render_target_view, clear_color);

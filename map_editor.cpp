@@ -22,15 +22,8 @@ void MapEditor::Clear() {
   arrfree(filenames);
 }
 
-void MapEditor::InitializeModelMatrices() {
-  size_t length = arrlen(element_model_matrices);
-  if (!length || length < size.x * size.y) {
-    for (int i = 0; i < size.x; i++) {
-      for (int j = 0; j < size.y; j++) {
-        
-      }
-    }
-  }
+int MapEditor::GetGridStep() {
+  return grid_steps[grid_step_index];
 }
 
 void MapEditor::Save(const char *filename) {
@@ -49,21 +42,21 @@ void MapEditor::Save(const char *filename) {
       const auto hash_map_length = hmlen(hash_map);
 
       Stream::Append(&stream, key, MAX_PATH);
-      Stream::Append(&stream, &hash_map_length, sizeof(int));
+      Stream::Append(&stream, &hash_map_length, sizeof(hash_map_length));
 
       for (int j = 0; j < hash_map_length; j++) {
         const auto position = hash_map[j].key;
         const auto array = hash_map[j].value;
         const auto array_length = arrlen(array);
 
-        Stream::Append(&stream, &position, sizeof(IVec2));
-        Stream::Append(&stream, &array_length, sizeof(int));
-        Stream::Append(&stream, &array[0], array_length * sizeof(Element));
+        Stream::Append(&stream, &position, sizeof(position));
+        Stream::Append(&stream, &array_length, sizeof(array_length));
+        Stream::Append(&stream, &array[0], array_length * sizeof(array[0]));
       }
     }
     const auto stream_length = arrlen(stream);
 
-    fwrite(&stream_length, sizeof(int), 1, file);
+    fwrite(&stream_length, sizeof(stream_length), 1, file);
     fwrite(stream, stream_length, 1, file);
   }
 }
@@ -73,7 +66,7 @@ void MapEditor::Load(const char *filename) {
   defer { fclose(file); };
 
   if (file != NULL) {
-    int stream_length;
+    size_t stream_length;
     fread(&stream_length, sizeof(stream_length), 1, file);
 
     char *stream = NULL;
@@ -88,7 +81,7 @@ void MapEditor::Load(const char *filename) {
     arrsetlen(key, MAX_PATH);
     memset(key, 0, arrlen(key));
 
-    int element_count;
+    size_t element_count;
 
     Stream::Read(&stream, &size, sizeof(size));
     Stream::Read(&stream, key, arrlen(key));
@@ -98,7 +91,7 @@ void MapEditor::Load(const char *filename) {
 
     for (int i = 0; i < element_count; i++) {
       IVec2 position;
-      int array_length;
+      size_t array_length;
 
       Stream::Read(&stream, &position, sizeof(position));
       Stream::Read(&stream, &array_length, sizeof(array_length));

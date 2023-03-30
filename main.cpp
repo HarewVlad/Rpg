@@ -16,9 +16,9 @@
 #include "tile_palette.cpp"
 #include "character.cpp"
 #include "map_editor.cpp"
-#include "player.cpp"
 #include "animationee.cpp"
 #include "mesh.cpp"
+#include "camera.cpp"
 #include "core.cpp"
 
 #include "test.cpp"

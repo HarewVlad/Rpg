@@ -33,6 +33,10 @@ void Core::Initialize(HINSTANCE instance) {
 
   mesh.Initialize(&directx);
 
+  camera = { {0, 0} };
+  projection = XMMatrixOrthographicLH(static_cast<float>(Constants::Width),
+                                      static_cast<float>(Constants::Height), 1, 1024);
+
   window.Show();
 }
 
@@ -78,14 +82,22 @@ void Core::Run() {
 
 void Core::Input(float dt) {
   int speed = config.Get<int>("interface_speed");
-  if (window.IsKeyDown('W'))
+  if (window.IsKeyDown('W')) {
+    camera.position.y += speed;
     interface_offset.y += speed;
-  if (window.IsKeyDown('A'))
+  }
+  if (window.IsKeyDown('A')) {
+    camera.position.x -= speed;
     interface_offset.x += speed;
-  if (window.IsKeyDown('S'))
+  }
+  if (window.IsKeyDown('S')) {
+    camera.position.y -= speed;
     interface_offset.y -= speed;
-  if (window.IsKeyDown('D'))
+  }
+  if (window.IsKeyDown('D')) {
+    camera.position.x += speed;
     interface_offset.x -= speed;
+  }
 }
 
 void Core::Update(float dt) {
@@ -202,7 +214,8 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
       ImGui::Image((void *)image.texture, size);
 
       ImGui::SetCursorPos(origin);
-      ImGui::InvisibleButton("Image", size, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+      ImGui::InvisibleButton("Image", size,
+                             ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
       const bool is_active = ImGui::IsItemActive();
       const bool is_hovered = ImGui::IsItemHovered();
 
@@ -211,23 +224,32 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
       const IVec2 mouse_tile = mouse_position / zoomed_grid_step;
       const IVec2 max_tiles = image.size / grid_step;
 
+      static IVec2 start_tile;
+      static IVec2 end_tile;
       static bool is_selecting = false;
       if (is_hovered && !is_selecting && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         tile_palette.Clear();
-        tile_palette.start_tile = mouse_tile;
+        start_tile = mouse_tile;
         is_selecting = true;
       }
 
       if (is_selecting) {
         if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-          tile_palette.AddTiles();
+
+          for (int x = start_tile.x; x <= end_tile.x; x++) {
+            for (int y = start_tile.y; y <= end_tile.y; y++) {
+              IVec2 tile = ImVec2(x, y);
+              hmput(tile_palette.active_tiles, tile, 1);
+            }
+          }
+
           is_selecting = false;
         }
       }
 
       if (is_active && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0)) {
         if (mouse_tile.x < max_tiles.x && mouse_tile.y < max_tiles.y)
-          tile_palette.end_tile = mouse_tile;
+          end_tile = mouse_tile;
       }
 
       if (is_active && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
@@ -256,11 +278,8 @@ void Core::RenderCreateMapInterface() {
   static bool show_grid = true;
   static bool add_animation = false;
   static bool add_character = false;
-  const int grid_steps[] = {8, 16, 32, 64, 128};
-  const char *grid_steps_string[] = {"8", "16", "32", "64", "128"};
-  static int grid_step_index = 1;
-  const int grid_step = grid_steps[grid_step_index];
   static int zoom = 1;
+  const int grid_step = map_editor.GetGridStep();
   const int zoomed_grid_step = grid_step * zoom;
   const IVec2 max_tiles = map_editor.size / zoomed_grid_step;
 
@@ -279,7 +298,8 @@ void Core::RenderCreateMapInterface() {
 
   ImGui::PushItemWidth(150);
   ImGui::Checkbox("Show grid", &show_grid);
-  ImGui::Combo("Grid step", &grid_step_index, grid_steps_string, IM_ARRAYSIZE(grid_steps_string));
+  ImGui::Combo("Grid step", &map_editor.grid_step_index, map_editor.grid_steps_string,
+               IM_ARRAYSIZE(map_editor.grid_steps_string));
   ImGui::SliderInt("Zoom", &zoom, 1, 10);
   ImGui::InputInt("Width", &map_editor.size.x);
   ImGui::InputInt("Height", &map_editor.size.y);
@@ -313,11 +333,8 @@ void Core::RenderCreateMapInterface() {
     }
   }
 
-  if (ImGui::Button("Test map")) {
-    map_editor.InitializeModelMatrices();
-
+  if (ImGui::Button("Test map"))
     state = Core_TestMap;
-  }
 
   if (ImGui::Button("Exit"))
     state = Core_Menu;
@@ -338,7 +355,8 @@ void Core::RenderCreateMapInterface() {
   }
 
   ImGui::SetCursorPos(p0);
-  ImGui::InvisibleButton("Image", map_editor.size * zoom, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+  ImGui::InvisibleButton("Image", map_editor.size * zoom,
+                         ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
   const bool is_active = ImGui::IsItemActive();
   const bool is_hovered = ImGui::IsItemHovered();
 
@@ -400,7 +418,8 @@ void Core::RenderCreateMapInterface() {
         const auto element = array[k];
 
         ImGui::SetCursorPos(p0 + position * zoomed_grid_step);
-        ImGui::Image((void *)image.texture, ImVec2(zoomed_grid_step, zoomed_grid_step), element.uv0, element.uv1);
+        ImGui::Image((void *)image.texture, 
+                     ImVec2(zoomed_grid_step, zoomed_grid_step), element.uv0, element.uv1);
       }
     }
   }
@@ -431,7 +450,8 @@ void Core::RenderMenuInterface() {
   ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0.0f, 0.0f, 1.0f));
   ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
 
-  ImGui::SetCursorPos({io.DisplaySize.x / 2.0f - button_size.x * 0.5f, io.DisplaySize.y / 2.0f - button_size.y * 3});
+  ImGui::SetCursorPos({io.DisplaySize.x / 2.0f - button_size.x * 0.5f,
+                       io.DisplaySize.y / 2.0f - button_size.y * 3});
   if (ImGui::Button("Play", button_size))
     state = Core_Game;
 
@@ -451,7 +471,46 @@ void Core::RenderMenuInterface() {
 }
 
 void Core::RenderMap() {
+  directx.device_context->IASetInputLayout(map_input_layout);
+  directx.device_context->VSSetShader(map_vertex_shader.shader, nullptr, 0);
+  directx.device_context->VSSetConstantBuffers(0, 1, &constant_buffer);
+  directx.device_context->PSSetShader(map_pixel_shader.shader, nullptr, 0);
 
+  UINT stride = sizeof(Vertex);
+  UINT offset = 0;
+  directx.device_context->IASetVertexBuffers(0, 1, &mesh.vertex_buffer, &stride, &offset);
+  directx.device_context->IASetIndexBuffer(mesh.index_buffer, DXGI_FORMAT_R32_UINT, 0);
+
+  const auto view = camera.GetView();
+  const auto grid_step = map_editor.GetGridStep();
+  const auto half_grid_step = grid_step / 2; // To scale meshes correctly (see mesh vertices)
+  const auto scale = XMMatrixScaling(half_grid_step, half_grid_step, 1);
+  
+  for (int i = 0; i < shlen(map_editor.elements); i++) {
+    const auto key = map_editor.elements[i].key;
+    const auto hash_map = map_editor.elements[i].value;
+    const auto image = shget(editor_images, key);
+
+    directx.device_context->PSSetShaderResources(0, 1, &image.texture);
+
+    for (int j = 0; j < hmlen(hash_map); j++) {
+      const auto position = hash_map[j].key;
+      const auto array = hash_map[j].value;
+
+      for (int k = 0; k < arrlen(array); k++) {
+        // const auto element = array[k];
+
+        const auto model = scale * 
+                           XMMatrixTranslation(position.x * grid_step, position.y * grid_step, 0);
+        const auto mvp = model * view * projection;
+
+        ConstantBuffer data = { XMMatrixTranspose(mvp) };
+        directx.UpdateBuffer(constant_buffer, &data, sizeof(data));
+
+        directx.device_context->DrawIndexed(6, 0, 0);
+      }
+    }
+  }
 }
 
 void Core::Render() {

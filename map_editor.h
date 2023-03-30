@@ -8,9 +8,11 @@ struct MapEditor {
   const char **filenames = NULL; // Used internally for undo operation
   HashMap<IVec2, Character> *characters = NULL;
   IVec2 size = IVec2(512, 512);
-  XMMATRIX *element_model_matrices = NULL;
+  const int grid_steps[5] = {8, 16, 32, 64, 128};
+  const char *grid_steps_string[5] = {"8", "16", "32", "64", "128"};
+  int grid_step_index = 1;
 
-  void InitializeModelMatrices();
+  int GetGridStep();
   void AddElement(const char *filename, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position);
   void AddCharacter(const IVec2 &position);
   void Save(const char *filename);
