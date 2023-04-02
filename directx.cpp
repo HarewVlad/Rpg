@@ -39,8 +39,8 @@ void Directx::Initialize(HWND hwnd, int width, int height) {
   assert(device->CreateSamplerState(&sd, &sampler) == S_OK);
 
   // Viewport
-  viewport.Width = (FLOAT)width;
-  viewport.Height = (FLOAT)height;
+  viewport.Width = width;
+  viewport.Height = height;
   viewport.MinDepth = 0.0f;
   viewport.MaxDepth = 1.0f;
   viewport.TopLeftX = 0;
@@ -114,26 +114,6 @@ void Directx::UpdateBuffer(ID3D11Buffer *buffer, const void *data, size_t size) 
   device_context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &sr);
   memcpy(sr.pData, data, size);
   device_context->Unmap(buffer, 0);
-}
-
-void Directx::RenderBegin() {
-  const float clear_color[] = {0.1, 0.1, 0.2, 1};
-  device_context->ClearRenderTargetView(render_target_view, clear_color);
-  device_context->ClearDepthStencilView(depth_stencil_view,
-                                                D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-                                                1.0f, 0);
-  device_context->RSSetViewports(1, &viewport);
-  device_context->OMSetRenderTargets(1, &render_target_view, depth_stencil_view);
-  device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-  // Used to rendering opaque textures
-  device_context->OMSetDepthStencilState(depth_stencil_state, 0);
-  const float blend_factor[] = {0, 0, 0, 0};
-  device_context->OMSetBlendState(blend_state, blend_factor, 0xffffffff);
-}
-
-void Directx::RenderEnd() {
-  swap_chain->Present(0, 0);
 }
 
 Image Directx::CreateImage(const char *filename) {

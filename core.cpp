@@ -7,7 +7,9 @@ void Core::Initialize(HINSTANCE instance) {
   InitializeConfig();
 
   window.Initialize(Constants::Name, Constants::Width, Constants::Height);
-  InitializeInterface(window.hwnd);
+
+  ImGui::CreateContext();
+  ImGui_ImplWin32_Init(window.hwnd);
 
   directx.Initialize(window.hwnd, Constants::Width, Constants::Height);
   ImGui_ImplDX11_Init(directx.device, directx.device_context);
@@ -33,9 +35,9 @@ void Core::Initialize(HINSTANCE instance) {
 
   mesh.Initialize(&directx);
 
-  camera = { {0, 0} };
-  projection = XMMatrixOrthographicLH(static_cast<float>(Constants::Width),
-                                      static_cast<float>(Constants::Height), 1, 1024);
+  camera.position = {0, 0};
+
+  projection = XMMatrixOrthographicOffCenterRH(0, Constants::Width, -Constants::Height, 0, 0.01f, 1024);
 
   window.Show();
 }
@@ -87,7 +89,7 @@ void Core::Input(float dt) {
     interface_offset.y += speed;
   }
   if (window.IsKeyDown('A')) {
-    camera.position.x -= speed;
+    camera.position.x += speed;
     interface_offset.x += speed;
   }
   if (window.IsKeyDown('S')) {
@@ -95,7 +97,7 @@ void Core::Input(float dt) {
     interface_offset.y -= speed;
   }
   if (window.IsKeyDown('D')) {
-    camera.position.x += speed;
+    camera.position.x -= speed;
     interface_offset.x -= speed;
   }
 }
@@ -233,11 +235,16 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
         is_selecting = true;
       }
 
+      if (is_active && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0)) {
+        if (mouse_tile.x < max_tiles.x && mouse_tile.y < max_tiles.y)
+          end_tile = mouse_tile;
+      }
+
       if (is_selecting) {
         if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 
-          for (int x = start_tile.x; x <= end_tile.x; x++) {
-            for (int y = start_tile.y; y <= end_tile.y; y++) {
+          for (int y = start_tile.y; y <= end_tile.y; y++) {
+            for (int x = start_tile.x; x <= end_tile.x; x++) {
               IVec2 tile = ImVec2(x, y);
               hmput(tile_palette.active_tiles, tile, 1);
             }
@@ -245,11 +252,6 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
 
           is_selecting = false;
         }
-      }
-
-      if (is_active && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0)) {
-        if (mouse_tile.x < max_tiles.x && mouse_tile.y < max_tiles.y)
-          end_tile = mouse_tile;
       }
 
       if (is_active && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
@@ -333,8 +335,15 @@ void Core::RenderCreateMapInterface() {
     }
   }
 
-  if (ImGui::Button("Test map"))
+  if (ImGui::Button("Test map")) {
+    // if (map_instance_buffer) map_instance_buffer->Release();
+    // map_instance_buffer = directx.CreateBuffer(D3D11_USAGE_DYNAMIC, 
+    //                                            D3D11_BIND_VERTEX_BUFFER,
+    //                                            D3D11_CPU_ACCESS_WRITE, NULL, 
+    //                                            map_editor.size.x * map_editor.size.y);
+
     state = Core_TestMap;
+  }
 
   if (ImGui::Button("Exit"))
     state = Core_Menu;
@@ -470,52 +479,94 @@ void Core::RenderMenuInterface() {
   ImGui::PopStyleVar();
 }
 
-void Core::RenderMap() {
-  directx.device_context->IASetInputLayout(map_input_layout);
-  directx.device_context->VSSetShader(map_vertex_shader.shader, nullptr, 0);
-  directx.device_context->VSSetConstantBuffers(0, 1, &constant_buffer);
-  directx.device_context->PSSetShader(map_pixel_shader.shader, nullptr, 0);
+void Core::RenderTestMap() {
+  const auto device_context = directx.device_context;
+
+  device_context->IASetInputLayout(map_input_layout);
+  device_context->VSSetShader(map_vertex_shader.shader, nullptr, 0);
+  device_context->VSSetConstantBuffers(0, 1, &constant_buffer);
+  device_context->PSSetShader(map_pixel_shader.shader, nullptr, 0);
 
   UINT stride = sizeof(Vertex);
   UINT offset = 0;
-  directx.device_context->IASetVertexBuffers(0, 1, &mesh.vertex_buffer, &stride, &offset);
-  directx.device_context->IASetIndexBuffer(mesh.index_buffer, DXGI_FORMAT_R32_UINT, 0);
+  device_context->IASetVertexBuffers(0, 1, &mesh.vertex_buffer, &stride, &offset);
+  device_context->IASetIndexBuffer(mesh.index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
   const auto view = camera.GetView();
   const auto grid_step = map_editor.GetGridStep();
-  const auto half_grid_step = grid_step / 2; // To scale meshes correctly (see mesh vertices)
-  const auto scale = XMMatrixScaling(half_grid_step, half_grid_step, 1);
+  const auto scale = XMMatrixScaling(grid_step, grid_step, 1);
   
   for (int i = 0; i < shlen(map_editor.elements); i++) {
     const auto key = map_editor.elements[i].key;
     const auto hash_map = map_editor.elements[i].value;
     const auto image = shget(editor_images, key);
 
-    directx.device_context->PSSetShaderResources(0, 1, &image.texture);
+    device_context->PSSetShaderResources(0, 1, &image.texture);
 
     for (int j = 0; j < hmlen(hash_map); j++) {
       const auto position = hash_map[j].key;
       const auto array = hash_map[j].value;
 
       for (int k = 0; k < arrlen(array); k++) {
-        // const auto element = array[k];
+        const auto element = array[k];
 
-        const auto model = scale * 
-                           XMMatrixTranslation(position.x * grid_step, position.y * grid_step, 0);
+        const auto model = scale *
+                           XMMatrixTranslation(-position.x * grid_step - grid_step,
+                                               -position.y * grid_step - grid_step, 0);
         const auto mvp = model * view * projection;
 
         ConstantBuffer data = { XMMatrixTranspose(mvp) };
         directx.UpdateBuffer(constant_buffer, &data, sizeof(data));
 
-        directx.device_context->DrawIndexed(6, 0, 0);
+        Vertex vertices[4] = {
+          {{0, 0}, element.uv1},
+          {{0, 1}, {element.uv1.x, element.uv0.y}},
+          {{1, 1}, element.uv0},
+          {{1, 0}, {element.uv0.x, element.uv1.y}}
+        };
+
+        directx.UpdateBuffer(mesh.vertex_buffer, &vertices, sizeof(vertices));
+
+        device_context->DrawIndexed(6, 0, 0);
       }
     }
   }
+
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 30);
+  ImGui::PushStyleColor(ImGuiCol_Border, (ImVec4)ImColor::HSV(0.0f, 0.0f, 0.0f));
+  ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0.0f, 0.0f, 1.0f));
+  ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
+
+  ImGui::SetCursorPosY(25); // To avoid menu bar
+
+  if (ImGui::Button("Back"))
+    state = Core_CreateMap;
+
+  ImGui::PopTextWrapPos();
+  ImGui::PopStyleColor(2);
+  ImGui::PopStyleVar();
 }
 
 void Core::Render() {
-  directx.RenderBegin();
-  InterfaceBegin();
+  const auto device_context = directx.device_context;
+
+  const float clear_color[] = {0.1, 0.1, 0.2, 1};
+  device_context->ClearRenderTargetView(directx.render_target_view, clear_color);
+  device_context->ClearDepthStencilView(directx.depth_stencil_view,
+                                                D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+                                                1.0f, 0);
+  device_context->RSSetViewports(1, &directx.viewport);
+  device_context->OMSetRenderTargets(1, &directx.render_target_view, directx.depth_stencil_view);
+  device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+  // Used to rendering opaque textures
+  device_context->OMSetDepthStencilState(directx.depth_stencil_state, 0);
+  const float blend_factor[] = {0, 0, 0, 0};
+  device_context->OMSetBlendState(directx.blend_state, blend_factor, 0xffffffff);
+
+  ImGui_ImplDX11_NewFrame();
+  ImGui_ImplWin32_NewFrame();
+  ImGui::NewFrame();
 
   ImGuiIO &io = ImGui::GetIO();
 
@@ -549,7 +600,7 @@ void Core::Render() {
       RenderCreateMapInterface();
     break;
     case Core_TestMap:
-      RenderMap();
+      RenderTestMap();
     break;
   }
 
@@ -558,7 +609,8 @@ void Core::Render() {
 
   // ImGui::PopStyleVar(2);
   ImGui::End();
+  ImGui::Render();
+  ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-  InterfaceEnd();
-  directx.RenderEnd();
+  directx.swap_chain->Present(0, 0);
 }

@@ -19,6 +19,7 @@ struct Core {
   PixelShader map_pixel_shader;
   ID3D11InputLayout *map_input_layout;
   ID3D11Buffer *constant_buffer;
+  // ID3D11Buffer *map_instance_buffer;
   Camera camera;
   XMMATRIX projection;
 
@@ -31,7 +32,7 @@ struct Core {
   void Run();
 
 private:
-  void RenderMap();
+  void RenderTestMap();
   void RenderAnimationeeInterface(bool *show, bool *add_animation);
   void RenderMenuInterface();
   void RenderTilePaletteInterface(bool *show, int grid_step); // Need to sync map grid and tile palette grid

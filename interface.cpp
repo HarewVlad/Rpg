@@ -1,19 +1,3 @@
-static void InitializeInterface(HWND hwnd) {
-  ImGui::CreateContext();
-  ImGui_ImplWin32_Init(hwnd);
-}
-
-static void InterfaceBegin() {
-  ImGui_ImplDX11_NewFrame();
-  ImGui_ImplWin32_NewFrame();
-  ImGui::NewFrame();
-}
-
-static void InterfaceEnd() {
-  ImGui::Render();
-  ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-}
-
 namespace ImGui {
   void DrawGrid(const ImVec2 &p0, const ImVec2 &p1, const ImVec2 &size, float step) {
     ImDrawList* draw_list = ImGui::GetWindowDrawList();

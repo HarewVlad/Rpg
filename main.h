@@ -122,19 +122,22 @@ using namespace DirectX;
 // 66. Add animation to character on the map :: DONE
 // 67. Fix issue when adding multiple animations in animationee you can't use combo box for second one :: DONE
 // 69. Ability to select same images in animationee :: DONE
-// 69. "Play" map
+// 69. Ability to "Play" the map :: DONE
 // 69.1. Create shaders :: DONE
 // 69.2. Create input layout :: DONE
 // 69.3. Create constant buffer :: DONE
 // 69.4. Create meshes :: DONE
 // 69.5. Draw test mesh when click "Test map" :: DONE
 // 69.6. Draw meshes correponding to tiles in map editor :: DONE
-// 69.7. Create dynamic instance buffer for uv coordinates for different map objects
+// 69.7. Fix issue with wrong order? of map objects :: DONE
+// 69.8. Make map in map editor and map in map test match :: DONE
+// 69.9. Draw character and it's animations :: 
 // 70. Save/Load map size :: DONE
 // 71. Fix issue when zooming map, can't place tiles outside of some region :: DONE
 
+// N - 8. Use one big vertex and index buffer for everything?
 // N - 7. Clean memory when deleting character
-// N - 6. Merge interface modules (TilePalette, MapEditor ...)
+// N - 6. Merge interface modules (TilePalette, MapEditor ...)?
 // N - 5. String builder for better strings and serialization (Jonothan Blow)
 // N - 2. Display not full path, but only filename in tab item
 // N - 1. Chest spawner
