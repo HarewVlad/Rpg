@@ -130,9 +130,9 @@ void Core::RenderAnimationeeInterface(bool *show, bool *add_animation) {
                 char *filename = Utils::GetString(MAX_PATH);
                 sprintf(filename, "%s\\%s", directory, file);
 
-                if (shgeti(animation_images, filename) < 0) {
+                if (shgeti(animationee.images, filename) < 0) {
                   const auto image = directx.CreateImage(filename);
-                  shput(animation_images, filename, image); 
+                  shput(animationee.images, filename, image); 
                 }
 
                 arrput(animation.filenames, filename);
@@ -154,7 +154,7 @@ void Core::RenderAnimationeeInterface(bool *show, bool *add_animation) {
   for (int i = 0; i < arrlen(animationee.animations); i++) {
     auto &animation = animationee.animations[i];
     const auto filename = animation.filenames[animation.index];
-    const auto image = shget(animation_images, filename);
+    const auto image = shget(animationee.images, filename);
 
     ImGui::Image((void *)image.texture, image.size); ImGui::SameLine();
 
@@ -375,7 +375,7 @@ void Core::RenderCreateMapInterface() {
   if (is_active && add_animation && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
     if (hmgeti(map_editor.characters, mouse_tile) >= 0) {
       auto &character = hmget(map_editor.characters, mouse_tile);
-      character.SetAnimation(&animationee.active_animation);
+      character.animations[animationee.active_animation.index] = animationee.active_animation.action;
       add_animation = false;    
     }
   }
@@ -524,12 +524,39 @@ void Core::RenderTestMap() {
           {{1, 1}, element.uv0},
           {{1, 0}, {element.uv0.x, element.uv1.y}}
         };
-
         directx.UpdateBuffer(mesh.vertex_buffer, &vertices, sizeof(vertices));
 
         device_context->DrawIndexed(6, 0, 0);
       }
     }
+  }
+
+  for (int i = 0; i < hmlen(map_editor.characters); i++) {
+    const auto position = map_editor.characters[i].key;
+    const auto character = map_editor.characters[i].value;
+    const auto animation_index = character.animations[character.current_animation];
+    const auto animation = animationee.animations[animation_index];
+    const auto image = shget(animationee.images, animation.filenames[animation.index]);
+
+    device_context->PSSetShaderResources(0, 1, &image.texture);
+
+    const auto model = scale *
+                       XMMatrixTranslation(-position.x * grid_step - grid_step,
+                                           -position.y * grid_step - grid_step, 0);
+    const auto mvp = model * view * projection;
+
+    ConstantBuffer data = { XMMatrixTranspose(mvp) };
+    directx.UpdateBuffer(constant_buffer, &data, sizeof(data));
+
+    Vertex vertices[4] = {
+      {{0, 0}, {0, 1}},
+      {{0, 1}, {0, 0}},
+      {{1, 1}, {1, 0}},
+      {{1, 0}, {1, 1}}
+    };
+    directx.UpdateBuffer(mesh.vertex_buffer, &vertices, sizeof(vertices));
+
+    device_context->DrawIndexed(6, 0, 0);
   }
 
   ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 30);
@@ -576,7 +603,8 @@ void Core::Render() {
 
   // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
   // ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-  ImGui::Begin("Interface", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar |
+  ImGui::Begin("Interface", NULL, ImGuiWindowFlags_NoMove |
+               ImGuiWindowFlags_NoTitleBar |
                ImGuiWindowFlags_NoBringToFrontOnFocus |
                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
                ImGuiWindowFlags_NoScrollbar);

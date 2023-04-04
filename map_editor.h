@@ -1,7 +1,13 @@
+
 struct MapEditor {
   struct Element {
     ImVec2 uv0;
     ImVec2 uv1;
+  };
+
+  struct Character {
+    int animations[Action_Count] = {};
+    int current_animation = Action_Idle;
   };
 
   HashMap<char *, HashMap<IVec2, Element *> *> *elements = NULL;

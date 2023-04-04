@@ -34,7 +34,6 @@ using namespace DirectX;
 #include "interface.h"
 #include "tile_palette.h"
 #include "animationee.h"
-#include "character.h"
 #include "map_editor.h"
 #include "mesh.h"
 #include "camera.h"
@@ -131,12 +130,16 @@ using namespace DirectX;
 // 69.6. Draw meshes correponding to tiles in map editor :: DONE
 // 69.7. Fix issue with wrong order? of map objects :: DONE
 // 69.8. Make map in map editor and map in map test match :: DONE
-// 69.9. Draw character and it's animations :: 
+// 69.9. Draw character and it's animation :: DONE
+// 69.10. Character movement? 
 // 70. Save/Load map size :: DONE
 // 71. Fix issue when zooming map, can't place tiles outside of some region :: DONE
+// 72. Use array instead of hash_map for character animations cause we know max size :: DONE
+// 73. Save grid step when saving a map :: DONE
 
+// N - 9. Use 2 meshes for character and map to not to update mesh everytime for character
+//        Or think about something else
 // N - 8. Use one big vertex and index buffer for everything?
-// N - 7. Clean memory when deleting character
 // N - 6. Merge interface modules (TilePalette, MapEditor ...)?
 // N - 5. String builder for better strings and serialization (Jonothan Blow)
 // N - 2. Display not full path, but only filename in tab item

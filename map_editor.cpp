@@ -18,6 +18,7 @@ void MapEditor::Clear() {
     auto hash_map = elements[i].value;
     hmfree(hash_map);
   }
+  hmfree(characters);
   hmfree(elements);
   arrfree(filenames);
 }
@@ -34,7 +35,8 @@ void MapEditor::Save(const char *filename) {
     char *stream = NULL;
     defer { arrfree(stream); };
 
-    Stream::Append(&stream, &size, sizeof(IVec2));
+    Stream::Append(&stream, &size, sizeof(size));
+    Stream::Append(&stream, &grid_step_index, sizeof(grid_step_index));
     
     for (int i = 0; i < shlen(elements); i++) {
       const auto key = elements[i].key;
@@ -54,6 +56,7 @@ void MapEditor::Save(const char *filename) {
         Stream::Append(&stream, &array[0], array_length * sizeof(array[0]));
       }
     }
+
     const auto stream_length = arrlen(stream);
 
     fwrite(&stream_length, sizeof(stream_length), 1, file);
@@ -84,6 +87,7 @@ void MapEditor::Load(const char *filename) {
     size_t element_count;
 
     Stream::Read(&stream, &size, sizeof(size));
+    Stream::Read(&stream, &grid_step_index, sizeof(grid_step_index));
     Stream::Read(&stream, key, arrlen(key));
     Stream::Read(&stream, &element_count, sizeof(element_count));
 

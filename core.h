@@ -13,7 +13,7 @@ struct Core {
   TilePalette tile_palette;
   ImVec2 interface_offset;
   MapEditor map_editor;
-  Mesh mesh; // Used for everything
+  Mesh mesh;
   Animationee animationee;
   VertexShader map_vertex_shader;
   PixelShader map_pixel_shader;
@@ -24,7 +24,6 @@ struct Core {
   XMMATRIX projection;
 
   HashMap<char *, Image> *editor_images = NULL;
-  HashMap<char *, Image> *animation_images = NULL;
 
   int state = Core_Menu;
 

@@ -6,7 +6,9 @@ enum Action_ {
   Action_Attack,
   Action_Roll,
   Action_Die,
-  Action_Idle
+  Action_Idle,
+
+  Action_Count,
 };
 
 static const char* Action_String[] = {
@@ -36,6 +38,7 @@ struct ActiveAnimation {
 };
 
 struct Animationee {
+  HashMap<char *, Image> *images = NULL;
   Animation *animations = NULL;
   ActiveAnimation active_animation;
 };
