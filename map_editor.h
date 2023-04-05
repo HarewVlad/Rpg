@@ -10,6 +10,7 @@ struct MapEditor {
     int current_animation = Action_Idle;
   };
 
+  HashMap<char *, Image> *images = NULL;
   HashMap<char *, HashMap<IVec2, Element *> *> *elements = NULL;
   const char **filenames = NULL; // Used internally for undo operation
   HashMap<IVec2, Character> *characters = NULL;
@@ -17,6 +18,8 @@ struct MapEditor {
   const int grid_steps[5] = {8, 16, 32, 64, 128};
   const char *grid_steps_string[5] = {"8", "16", "32", "64", "128"};
   int grid_step_index = 1;
+  HashMap<IVec2, bool> *active_tiles = NULL;
+  const char *active_filename = NULL;
 
   int GetGridStep();
   void AddElement(const char *filename, const ImVec2 &uv0, const ImVec2 &uv1, const IVec2 &position);

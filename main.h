@@ -32,7 +32,6 @@ using namespace DirectX;
 #include "window.h"
 #include "directx.h"
 #include "interface.h"
-#include "tile_palette.h"
 #include "animationee.h"
 #include "map_editor.h"
 #include "mesh.h"

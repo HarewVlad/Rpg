@@ -10,7 +10,6 @@ struct Core {
   Window window;
   Directx directx;
   Config config;
-  TilePalette tile_palette;
   ImVec2 interface_offset;
   MapEditor map_editor;
   Mesh mesh;
@@ -23,8 +22,6 @@ struct Core {
   Camera camera;
   XMMATRIX projection;
 
-  HashMap<char *, Image> *editor_images = NULL;
-
   int state = Core_Menu;
 
   void Initialize(HINSTANCE instance);
@@ -34,7 +31,7 @@ private:
   void RenderTestMap();
   void RenderAnimationeeInterface(bool *show, bool *add_animation);
   void RenderMenuInterface();
-  void RenderTilePaletteInterface(bool *show, int grid_step); // Need to sync map grid and tile palette grid
+  void RenderTilePaletteInterface(bool *show);
   void RenderCreateMapInterface();
   void Input(float dt);
   void Update(float dt);

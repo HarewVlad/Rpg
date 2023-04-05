@@ -13,7 +13,6 @@
 #include "window.cpp"
 #include "directx.cpp"
 #include "interface.cpp"
-#include "tile_palette.cpp"
 #include "map_editor.cpp"
 #include "animationee.cpp"
 #include "mesh.cpp"

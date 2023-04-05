@@ -172,10 +172,11 @@ void Core::RenderAnimationeeInterface(bool *show, bool *add_animation) {
   ImGui::End();
 }
 
-void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
+void Core::RenderTilePaletteInterface(bool *show) {
   ImGui::Begin("Tile palette", show, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize);
 
   static int zoom = 1;
+  const int grid_step = map_editor.GetGridStep();
   const int zoomed_grid_step = grid_step * zoom;
 
   if (ImGui::BeginMenuBar()) {
@@ -183,9 +184,9 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
       if (ImGui::MenuItem("Open")) {
         const char *filename = Utils::SelectFile();
 
-        if (filename != NULL && shgeti(editor_images, filename) < 0) {
+        if (filename != NULL && shgeti(map_editor.images, filename) < 0) {
           const auto image = directx.CreateImage(filename);
-          shput(editor_images, filename, image);
+          shput(map_editor.images, filename, image);
         }
       }
       ImGui::EndMenu();
@@ -200,12 +201,15 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
   }
 
   ImGui::BeginTabBar("Images");
-  for (int i = 0; i < shlen(editor_images); i++) {
-    const auto filename = editor_images[i].key;
-    const auto image = editor_images[i].value;
+  for (int i = 0; i < shlen(map_editor.images); i++) {
+    const auto filename = map_editor.images[i].key;
+    const auto image = map_editor.images[i].value;
 
     if (ImGui::BeginTabItem(filename)) {
-      tile_palette.SetActive(filename);
+      if (map_editor.active_filename != filename) {
+        map_editor.active_filename = filename;
+        hmfree(map_editor.active_tiles);
+      }
 
       const ImVec2 p0 = ImGui::GetCursorScreenPos();
       const ImVec2 origin = ImGui::GetCursorPos();
@@ -230,7 +234,7 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
       static IVec2 end_tile;
       static bool is_selecting = false;
       if (is_hovered && !is_selecting && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        tile_palette.Clear();
+        hmfree(map_editor.active_tiles);
         start_tile = mouse_tile;
         is_selecting = true;
       }
@@ -246,7 +250,7 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
           for (int y = start_tile.y; y <= end_tile.y; y++) {
             for (int x = start_tile.x; x <= end_tile.x; x++) {
               IVec2 tile = ImVec2(x, y);
-              hmput(tile_palette.active_tiles, tile, 1);
+              hmput(map_editor.active_tiles, tile, 1);
             }
           }
 
@@ -255,10 +259,10 @@ void Core::RenderTilePaletteInterface(bool *show, int grid_step) {
       }
 
       if (is_active && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        tile_palette.Clear();
+        hmfree(map_editor.active_tiles);
 
-      for (int j = 0; j < hmlen(tile_palette.active_tiles); j++) {
-        const auto active_tile = tile_palette.active_tiles[j].key;
+      for (int j = 0; j < hmlen(map_editor.active_tiles); j++) {
+        const auto active_tile = map_editor.active_tiles[j].key;
         const ImVec2 start = p0 + active_tile * zoomed_grid_step;
         const ImVec2 end = ImVec2(start.x + zoomed_grid_step, start.y + zoomed_grid_step);
 
@@ -328,9 +332,9 @@ void Core::RenderCreateMapInterface() {
     for (int i = 0; i < hmlen(map_editor.elements); i++) {
       filename = map_editor.elements[i].key;
 
-      if (shgeti(editor_images, filename) < 0) {
+      if (shgeti(map_editor.images, filename) < 0) {
         const auto image = directx.CreateImage(filename);
-        shput(editor_images, filename, image);
+        shput(map_editor.images, filename, image);
       }
     }
   }
@@ -348,7 +352,7 @@ void Core::RenderCreateMapInterface() {
   if (ImGui::Button("Exit"))
     state = Core_Menu;
 
-  if (show_tile_palette) RenderTilePaletteInterface(&show_tile_palette, grid_step);
+  if (show_tile_palette) RenderTilePaletteInterface(&show_tile_palette);
   if (show_animationee) RenderAnimationeeInterface(&show_animationee, &add_animation);
 
   const ImVec2 p0 = interface_offset;
@@ -392,12 +396,12 @@ void Core::RenderCreateMapInterface() {
   if (add_character && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     hmdel(map_editor.characters, mouse_tile);
 
-  if (tile_palette.active_key != NULL) {
-    const auto active_image = shget(editor_images, tile_palette.active_key);
+  if (map_editor.active_filename != NULL) {
+    const auto active_image = shget(map_editor.images, map_editor.active_filename);
 
-    for (int i = 0; i < hmlen(tile_palette.active_tiles); i++) {
-      const auto start_tile = tile_palette.active_tiles[0].key;
-      const auto active_tile = tile_palette.active_tiles[i].key;
+    for (int i = 0; i < hmlen(map_editor.active_tiles); i++) {
+      const auto start_tile = map_editor.active_tiles[0].key;
+      const auto active_tile = map_editor.active_tiles[i].key;
       const IVec2 tile_offset = active_tile - (start_tile - mouse_tile);
 
       ImVec2 tile_uv0 = active_tile * grid_step;
@@ -410,14 +414,14 @@ void Core::RenderCreateMapInterface() {
                    tile_uv0, tile_uv1, ImVec4(1, 1, 1, 0.5f));
 
       if (is_active && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        map_editor.AddElement(tile_palette.active_key, tile_uv0, tile_uv1, tile_offset);
+        map_editor.AddElement(map_editor.active_filename, tile_uv0, tile_uv1, tile_offset);
     }
   }
   
   for (int i = 0; i < shlen(map_editor.elements); i++) {
     const auto filename = map_editor.elements[i].key;
     const auto map = map_editor.elements[i].value;
-    const auto image = shget(editor_images, filename);
+    const auto image = shget(map_editor.images, filename);
 
     for (int j = 0; j < hmlen(map); j++) {
       const auto position = map[j].key;
@@ -499,7 +503,7 @@ void Core::RenderTestMap() {
   for (int i = 0; i < shlen(map_editor.elements); i++) {
     const auto key = map_editor.elements[i].key;
     const auto hash_map = map_editor.elements[i].value;
-    const auto image = shget(editor_images, key);
+    const auto image = shget(map_editor.images, key);
 
     device_context->PSSetShaderResources(0, 1, &image.texture);
 
